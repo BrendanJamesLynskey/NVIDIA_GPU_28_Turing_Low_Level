@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NVIDIA GPU 28 — Turing Low-Level HW</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-card: #0d1117;
+            --bg-code: #161b22;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent: #76B900;
+            --accent-dim: #76B90044;
+            --accent-glow: #76B90033;
+            --border: #21262d;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --font-body: 'Inter', sans-serif;
+            --max-width: 900px;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 17px;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* ── Header ── */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .hero > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .series-label {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--accent);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        .hero h1 {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        .hero h1 .accent {
+            color: var(--accent);
+        }
+
+        .hero .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin-bottom: 2rem;
+        }
+
+        /* ── Tag Pills ── */
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .tag {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            background: var(--accent-dim);
+            white-space: nowrap;
+        }
+
+        /* ── Pipeline Flow Bar ── */
+        .pipeline {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            margin-bottom: 1rem;
+            max-width: var(--max-width);
+        }
+
+        .pipeline-step {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            padding: 0.3rem 0.7rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .pipeline-arrow {
+            color: var(--accent);
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        /* ── Slides ── */
+        .slide {
+            min-height: 100vh;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 4rem 1.5rem;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .slide-number {
+            font-family: var(--font-display);
+            font-size: 5rem;
+            font-weight: 700;
+            color: var(--accent-dim);
+            position: absolute;
+            top: 2rem;
+            right: 1.5rem;
+            line-height: 1;
+            user-select: none;
+        }
+
+        .slide h2 {
+            font-family: var(--font-display);
+            font-size: 1.9rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            line-height: 1.25;
+        }
+
+        .slide h3 {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .slide p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .slide p strong {
+            color: var(--text-primary);
+        }
+
+        .slide ul, .slide ol {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .slide li {
+            margin-bottom: 0.4rem;
+        }
+
+        .slide li strong {
+            color: var(--text-primary);
+        }
+
+        /* ── Code Blocks ── */
+        .code-block {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin: 1.25rem 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--accent);
+            background: rgba(118, 185, 0, 0.08);
+            padding: 0.4rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .code-block pre {
+            margin: 0;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+
+        .code-block code {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #c9d1d9;
+        }
+
+        /* Syntax highlighting (manual) */
+        .kw { color: #ff7b72; }
+        .fn { color: #d2a8ff; }
+        .str { color: #a5d6ff; }
+        .cm { color: #8b949e; font-style: italic; }
+        .num { color: #79c0ff; }
+        .type { color: #ffa657; }
+        .dir { color: #ff7b72; }
+        .mac { color: #ffa657; }
+
+        /* ── Tables ── */
+        .table-wrap {
+            overflow-x: auto;
+            margin: 1.25rem 0;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: var(--bg-code);
+            color: var(--accent);
+            font-weight: 600;
+            text-align: left;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            font-family: var(--font-display);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 0.6rem 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:nth-child(even) td {
+            background: rgba(13, 17, 23, 0.5);
+        }
+
+        /* ── Diagrams ── */
+        .diagram-flow {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .diagram-box {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .diagram-box.accent {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(118, 185, 0, 0.08);
+        }
+
+        .diagram-box.dim {
+            color: var(--text-secondary);
+            border-color: var(--border);
+        }
+
+        .diagram-arrow {
+            color: var(--accent);
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        /* Vertical flow diagrams */
+        .diagram-vertical {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .diagram-vertical .diagram-arrow {
+            font-size: 1.1rem;
+        }
+
+        /* Nested hierarchy diagram */
+        .hierarchy {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .hierarchy-level {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .hierarchy-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            min-width: 80px;
+            text-align: right;
+        }
+
+        .hierarchy-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+        }
+
+        .hierarchy-item {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .hierarchy-item.accent {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(118, 185, 0, 0.08);
+        }
+
+        /* Grid diagram */
+        .diagram-grid {
+            display: grid;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .diagram-grid.cols-2 {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .diagram-grid.cols-3 {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .diagram-panel {
+            padding: 1rem;
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .diagram-panel.accent-border {
+            border-left: 3px solid var(--accent);
+        }
+
+        .diagram-panel h4 {
+            font-family: var(--font-display);
+            font-size: 1rem;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+
+        .diagram-panel p, .diagram-panel ul {
+            font-size: 0.85rem;
+        }
+
+        /* ── Callout Boxes ── */
+        .callout {
+            background: var(--bg-card);
+            border-left: 3px solid var(--accent);
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.25rem;
+            margin: 1.25rem 0;
+        }
+
+        .callout p {
+            margin-bottom: 0;
+        }
+
+        .callout .callout-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.3rem;
+        }
+
+        /* ── Tier Visual ── */
+        .tier-visual {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .tier-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .tier-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            min-width: 90px;
+            text-align: right;
+        }
+
+        .tier-fill {
+            height: 32px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding: 0 0.75rem;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            white-space: nowrap;
+            transition: width 0.6s ease;
+        }
+
+        .tier-cost {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            min-width: 70px;
+        }
+
+        /* ── Contents list ── */
+        .contents-list {
+            list-style: none;
+            padding-left: 0;
+            counter-reset: contents;
+        }
+
+        .contents-list li {
+            counter-increment: contents;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .contents-list li:last-child {
+            border-bottom: none;
+        }
+
+        .contents-list li::before {
+            content: counter(contents, decimal-leading-zero);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--accent);
+            min-width: 2rem;
+        }
+
+        .contents-list a {
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .contents-list a:hover {
+            color: var(--accent);
+        }
+
+        /* ── Footer ── */
+        .footer {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+            max-width: var(--max-width);
+            margin: 0 auto;
+        }
+
+        .footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 640px) {
+            .slide {
+                padding: 3rem 1rem;
+                min-height: auto;
+            }
+
+            .slide-number {
+                font-size: 3rem;
+                top: 1.5rem;
+                right: 1rem;
+            }
+
+            .slide h2 {
+                font-size: 1.5rem;
+            }
+
+            .diagram-grid.cols-2,
+            .diagram-grid.cols-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .pipeline {
+                gap: 0.15rem;
+            }
+
+            .pipeline-step {
+                font-size: 0.6rem;
+                padding: 0.2rem 0.4rem;
+            }
+
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+
+            table {
+                font-size: 0.78rem;
+            }
+
+            .tier-label {
+                min-width: 60px;
+                font-size: 0.65rem;
+            }
+
+            .tier-fill {
+                font-size: 0.6rem;
+                height: 26px;
+            }
+        }
+
+        /* ── Interactive controls (added for Local LLM series) ── */
+        .control-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin: 1.25rem 0;
+        }
+        .control-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+        .control-row label {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            min-width: 180px;
+        }
+        .control-row input[type="range"] {
+            flex: 1;
+            min-width: 160px;
+            accent-color: var(--accent);
+        }
+        .control-row input[type="number"],
+        .control-row select {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 4px;
+            padding: 0.3rem 0.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+        }
+        .control-row .val {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--accent);
+            min-width: 80px;
+            text-align: right;
+        }
+        .btn {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            padding: 0.4rem 0.9rem;
+            background: var(--accent-dim);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .btn:hover { background: rgba(118, 185, 0, 0.2); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn.secondary {
+            background: var(--bg-code);
+            color: var(--text-secondary);
+            border-color: var(--border);
+        }
+        .result-box {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            margin-top: 0.75rem;
+        }
+        .result-box .line-label { color: var(--text-secondary); }
+        .result-box .line-val   { color: var(--accent); font-weight: 600; }
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+        .metric {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.6rem 0.8rem;
+            text-align: center;
+        }
+        .metric .metric-label {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .metric .metric-value {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            color: var(--accent);
+            font-weight: 600;
+            margin-top: 0.2rem;
+        }
+
+        /* Canvas / SVG containers */
+        .canvas-wrap {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1.25rem 0;
+            overflow-x: auto;
+        }
+        .canvas-wrap canvas,
+        .canvas-wrap svg {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+        }
+
+        /* Small inline badge */
+        .badge {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            padding: 0.1rem 0.45rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            vertical-align: middle;
+            margin-left: 0.3rem;
+        }
+        .badge.ok    { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+        .badge.warn  { border-color: #ffa657; color: #ffa657; background: rgba(255,166,87,0.08); }
+        .badge.bad   { border-color: #ff7b72; color: #ff7b72; background: rgba(255,123,114,0.08); }
+
+    </style>
+</head>
+<body>
+
+<header class="hero">
+    <div class="series-label">NVIDIA GPU Architectures Series — Presentation 28</div>
+    <h1>Inside <span class="accent">Turing</span> &mdash; RT Cores, INT8/INT4 Tensor Cores, GDDR6</h1>
+    <p class="subtitle">A low-level look at the 2018 architecture that brought consumer-class hardware ray tracing, second-generation tensor cores with INT8/INT4, and the T4 inference card that defined cloud GPU economics for years. Block diagrams, arithmetic, process, voltages, clocks, capacities, and standards.</p>
+
+    <div class="tags">
+        <span class="tag">TU102</span><span class="tag">TU104</span><span class="tag">TU106</span><span class="tag">TU116</span>
+        <span class="tag">T4</span><span class="tag">RTX 2080 Ti</span>
+        <span class="tag">TSMC 12FF</span><span class="tag">GDDR6</span>
+        <span class="tag">RT 1st gen</span><span class="tag">TC 2nd gen</span>
+    </div>
+
+    <div class="pipeline">
+        <span class="pipeline-step">TU10x</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">GPC</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">SM</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">TC2</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">RT1</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">GDDR6</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">NVLink 2.0</span>
+    </div>
+</header>
+
+<section class="slide" id="slide-00">
+    <div class="slide-number">00</div>
+    <h2>Topics We'll Cover</h2>
+    <ul class="contents-list">
+        <li><a href="#slide-01">Turing at a Glance &mdash; Five Dies, One Architecture</a></li>
+        <li><a href="#slide-02">TU102 Die &mdash; Block Diagram</a></li>
+        <li><a href="#slide-03">The Turing SM &mdash; Adds RT Core, Splits FP/INT (again)</a></li>
+        <li><a href="#slide-04">2nd-Generation Tensor Cores &mdash; INT8 &amp; INT4</a></li>
+        <li><a href="#slide-05">1st-Generation RT Cores &mdash; BVH in Hardware</a></li>
+        <li><a href="#slide-06">Process &amp; Voltages</a></li>
+        <li><a href="#slide-07">Clocks, Power, Form Factors</a></li>
+        <li><a href="#slide-08">Memory &mdash; GDDR6, the New Mainstream</a></li>
+        <li><a href="#slide-09">NVLink 2.0 (Bridge), PCIe 3.0</a></li>
+        <li><a href="#slide-10">Tesla T4 &mdash; The 75 W Inference Card That Won the Cloud</a></li>
+        <li><a href="#slide-11">Turing's Innovations</a></li>
+        <li><a href="#slide-12">Interactive: Turing SKU Picker</a></li>
+    </ul>
+</section>
+
+<section class="slide" id="slide-01">
+    <div class="slide-number">01</div>
+    <h2>Turing at a Glance &mdash; Five Dies, One Architecture</h2>
+    <p>Turing launched in <strong>September 2018</strong> on the same TSMC 12FF node as Volta, but with a far more diverse die family. <strong>TU102 / 104 / 106</strong> are full RTX dies with RT and tensor cores; <strong>TU116 / 117</strong> are budget dies that drop both, becoming the GTX 16-series. The same generation also produced the <strong>Tesla T4</strong>, NVIDIA's most successful datacenter inference card.</p>
+
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Die</th><th>SMs</th><th>RT cores</th><th>Tensor cores</th><th>Top SKU</th><th>TDP</th></tr></thead>
+            <tbody>
+                <tr><td>TU102</td><td>72 (68 enabled)</td><td>72</td><td>576</td><td>RTX 2080 Ti / Titan RTX / Quadro RTX 8000</td><td>250&ndash;280 W</td></tr>
+                <tr><td>TU104</td><td>48 (46 enabled)</td><td>48</td><td>384</td><td>RTX 2080 / 2070 Super / T4</td><td>175&ndash;215 W (T4 = 75 W)</td></tr>
+                <tr><td>TU106</td><td>36</td><td>36</td><td>288</td><td>RTX 2070 / 2060</td><td>175&ndash;185 W</td></tr>
+                <tr><td>TU116</td><td>24</td><td>0 (no RT)</td><td>0 (no TC)</td><td>GTX 1660 Ti / 1660 Super</td><td>120 W</td></tr>
+                <tr><td>TU117</td><td>16</td><td>0</td><td>0</td><td>GTX 1650</td><td>75 W</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="slide" id="slide-02">
+    <div class="slide-number">02</div>
+    <h2>TU102 Die &mdash; Block Diagram</h2>
+    <div class="hierarchy">
+        <div class="hierarchy-level">
+            <div class="hierarchy-label">Chip</div>
+            <div class="hierarchy-items"><span class="hierarchy-item accent">TU102 die &mdash; 754 mm&sup2;, 18.6 B transistors</span></div>
+        </div>
+        <div class="hierarchy-level">
+            <div class="hierarchy-label">GPCs</div>
+            <div class="hierarchy-items">
+                <span class="hierarchy-item">GPC0</span><span class="hierarchy-item">GPC1</span><span class="hierarchy-item">GPC2</span><span class="hierarchy-item">GPC3</span><span class="hierarchy-item">GPC4</span><span class="hierarchy-item">GPC5</span>
+            </div>
+        </div>
+        <div class="hierarchy-level">
+            <div class="hierarchy-label">TPCs / GPC</div>
+            <div class="hierarchy-items"><span class="hierarchy-item">6 TPCs &times; 6 GPCs = 36 TPCs (72 SMs)</span></div>
+        </div>
+        <div class="hierarchy-level">
+            <div class="hierarchy-label">L2</div>
+            <div class="hierarchy-items"><span class="hierarchy-item">6 MB total (12 partitions of 512 KB)</span></div>
+        </div>
+        <div class="hierarchy-level">
+            <div class="hierarchy-label">Memory</div>
+            <div class="hierarchy-items"><span class="hierarchy-item accent">12 GDDR6 controllers, 384-bit bus</span></div>
+        </div>
+        <div class="hierarchy-level">
+            <div class="hierarchy-label">IO</div>
+            <div class="hierarchy-items"><span class="hierarchy-item">PCIe 3.0 x16</span><span class="hierarchy-item">2 NVLink 2.0 (bridge only on 2080 Ti / Titan / Quadro)</span></div>
+        </div>
+    </div>
+</section>
+
+<section class="slide" id="slide-03">
+    <div class="slide-number">03</div>
+    <h2>The Turing SM &mdash; Adds RT Core, Splits FP/INT (again)</h2>
+    <p>Turing inherits Volta's 4-partition layout and concurrent INT/FP datapaths. New: a dedicated <strong>RT core</strong> per SM (1 per SM, not per partition). Tensor cores upgraded to 2nd generation. FP64 cut to a 1:32 token rate &mdash; this is a graphics architecture that retains compute-friendly tensor cores, not a HPC chip.</p>
+
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel accent-border">
+            <h4>Per-SM compute (TU10x with RT)</h4>
+            <ul>
+                <li><strong>64 FP32</strong> cores (16 per partition)</li>
+                <li><strong>64 INT32</strong> cores (16 per partition) &mdash; concurrent with FP32</li>
+                <li><strong>2 FP64</strong> cores per SM &mdash; 1:32 of FP32</li>
+                <li><strong>8 tensor cores</strong> (2 per partition) &mdash; 2nd generation</li>
+                <li><strong>1 RT core</strong> per SM &mdash; 1st generation</li>
+                <li>16 LD/ST, 16 SFU</li>
+                <li>4 warp schedulers</li>
+            </ul>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>Per-SM memory</h4>
+            <ul>
+                <li><strong>256 KB register file</strong></li>
+                <li><strong>96 KB unified L1 + shared</strong> (configurable 32+64 or 64+32)</li>
+                <li>2&times; L1 BW vs Volta</li>
+                <li>4 KB instruction cache</li>
+            </ul>
+        </div>
+    </div>
+
+    <p>TU116/117 SMs drop the RT and tensor cores entirely &mdash; just FP32 + INT32 + FP64 lanes. They re-add INT8 dot-product (DP4A) for inference at low cost.</p>
+</section>
+
+<section class="slide" id="slide-04">
+    <div class="slide-number">04</div>
+    <h2>2nd-Generation Tensor Cores &mdash; INT8 &amp; INT4</h2>
+    <p>Volta's 1st-gen tensor cores were FP16-only. Turing adds <strong>INT8 (4&times;) and INT4 (8&times;)</strong> at the same MMA shape, opening the door to quantised inference at multi-TOPS rates on small chips.</p>
+
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Operation</th><th>Per SM per cycle</th><th>RTX 2080 Ti peak (1545 MHz)</th><th>Tesla T4 peak (1590 MHz)</th></tr></thead>
+            <tbody>
+                <tr><td>FP32 FMA</td><td>64</td><td>13.4 TFLOPS</td><td>8.1 TFLOPS</td></tr>
+                <tr><td>FP16x2 (no TC)</td><td>128</td><td>26.9 TFLOPS</td><td>16.2 TFLOPS</td></tr>
+                <tr><td><strong>Tensor FP16</strong></td><td><strong>512</strong></td><td><strong>108 TFLOPS</strong></td><td><strong>65 TFLOPS</strong></td></tr>
+                <tr><td><strong>Tensor INT8</strong></td><td><strong>1024</strong></td><td><strong>215 TOPS</strong></td><td><strong>130 TOPS</strong></td></tr>
+                <tr><td><strong>Tensor INT4</strong></td><td><strong>2048</strong></td><td><strong>431 TOPS</strong></td><td><strong>260 TOPS</strong></td></tr>
+            </tbody>
+        </table>
+    </div>
+    <p>PTX additions: <code>mma.sync.aligned.m8n8k16.s32.s8.s8.s32</code> (INT8 with INT32 accumulate) and <code>mma.sync.aligned.m8n8k32.s32.s4.s4.s32</code> (INT4). DLSS 1.0/2.0 rendering on consumer Turing rides the same hardware.</p>
+</section>
+
+<section class="slide" id="slide-05">
+    <div class="slide-number">05</div>
+    <h2>1st-Generation RT Cores &mdash; BVH in Hardware</h2>
+    <p>Each Turing RT core does two things: <strong>BVH (bounding-volume hierarchy) traversal</strong> and <strong>ray-triangle intersection testing</strong>, in fixed-function hardware. Without RT cores, the same operations run as compute kernels on the SM and consume ~10&times; the time per ray. Top-die RTX 2080 Ti claims ~10 Gigarays/sec.</p>
+
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel accent-border">
+            <h4>Why fixed-function</h4>
+            <p>BVH traversal is divergent and pointer-chasing &mdash; pathological for SIMT lanes. A dedicated unit with its own memory pipeline retires one ray-box test per cycle without warp divergence cost.</p>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>Programming model</h4>
+            <p>Exposed via DXR (DirectX Raytracing), Vulkan KHR_ray_tracing, OptiX 7. The GPU builds the BVH (TLAS / BLAS), the RT core traverses it, the SM runs hit/miss shaders.</p>
+        </div>
+    </div>
+
+    <p>For AI workflows, RT cores became relevant later via path-traced synthetic data generation (Omniverse) &mdash; a use case 2018 didn't anticipate.</p>
+</section>
+
+<section class="slide" id="slide-06">
+    <div class="slide-number">06</div>
+    <h2>Process &amp; Voltages</h2>
+    <p>All Turing dies on <strong>TSMC 12FF</strong> &mdash; same node as Volta. Density per mm&sup2; lower than GV100 because graphics-die layouts tend to be I/O-heavier. Core voltage 0.71&ndash;1.07 V.</p>
+
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Die</th><th>Transistors</th><th>Area</th><th>Density (M/mm&sup2;)</th></tr></thead>
+            <tbody>
+                <tr><td>TU102</td><td>18.6 B</td><td>754 mm&sup2;</td><td>24.7</td></tr>
+                <tr><td>TU104</td><td>13.6 B</td><td>545 mm&sup2;</td><td>25.0</td></tr>
+                <tr><td>TU106</td><td>10.8 B</td><td>445 mm&sup2;</td><td>24.3</td></tr>
+                <tr><td>TU116</td><td>6.6 B</td><td>284 mm&sup2;</td><td>23.2</td></tr>
+                <tr><td>TU117</td><td>4.7 B</td><td>200 mm&sup2;</td><td>23.5</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="slide" id="slide-07">
+    <div class="slide-number">07</div>
+    <h2>Clocks, Power, Form Factors</h2>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>SKU</th><th>Base</th><th>Boost</th><th>Memory</th><th>BW</th><th>TDP</th></tr></thead>
+            <tbody>
+                <tr><td>RTX 2080 Ti</td><td>1350 MHz</td><td>1545 MHz</td><td>11 GB GDDR6 14 Gbps</td><td>616 GB/s</td><td>250 W (FE 260 W)</td></tr>
+                <tr><td>Titan RTX</td><td>1350 MHz</td><td>1770 MHz</td><td>24 GB GDDR6 14 Gbps</td><td>672 GB/s</td><td>280 W</td></tr>
+                <tr><td>Quadro RTX 8000</td><td>1395 MHz</td><td>1770 MHz</td><td>48 GB GDDR6 ECC</td><td>672 GB/s</td><td>295 W</td></tr>
+                <tr><td>RTX 2080 Super</td><td>1650 MHz</td><td>1815 MHz</td><td>8 GB GDDR6 15.5 Gbps</td><td>496 GB/s</td><td>250 W</td></tr>
+                <tr><td>Tesla T4</td><td>585 MHz</td><td>1590 MHz</td><td>16 GB GDDR6 10 Gbps</td><td>320 GB/s</td><td>70 W (slot only)</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="slide" id="slide-08">
+    <div class="slide-number">08</div>
+    <h2>Memory &mdash; GDDR6, the New Mainstream</h2>
+    <p>Turing introduced <strong>GDDR6</strong> at 14 Gbps/pin (later 15.5 Gbps Super refresh). Compared to Pascal's GDDR5X, GDDR6 uses regular DDR signalling at 14 Gbps PAM2 with two channels per chip (16-bit each = 32-bit per chip). Same capacity per chip; cleaner signal eye than GDDR5X's quirky QDR.</p>
+
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>SKU</th><th>Capacity</th><th>Bus</th><th>Pin rate</th><th>BW</th></tr></thead>
+            <tbody>
+                <tr><td>RTX 2080 Ti</td><td>11 GB</td><td>352-bit</td><td>14 Gbps</td><td>616 GB/s</td></tr>
+                <tr><td>Titan RTX / Quadro RTX 6000</td><td>24 GB</td><td>384-bit</td><td>14 Gbps</td><td>672 GB/s</td></tr>
+                <tr><td>Quadro RTX 8000</td><td>48 GB ECC</td><td>384-bit</td><td>14 Gbps</td><td>672 GB/s</td></tr>
+                <tr><td>RTX 2080 Super</td><td>8 GB</td><td>256-bit</td><td>15.5 Gbps</td><td>496 GB/s</td></tr>
+                <tr><td>Tesla T4</td><td>16 GB ECC</td><td>256-bit</td><td>10 Gbps</td><td>320 GB/s</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="slide" id="slide-09">
+    <div class="slide-number">09</div>
+    <h2>NVLink 2.0 (Bridge), PCIe 3.0</h2>
+    <p>Turing was the <strong>last consumer arch with NVLink</strong>. RTX 2080 Ti, Titan RTX, and Quadro RTX 6000/8000 carry an NVLink 2.0 bridge connector for two-card configurations: <strong>2 links &times; 25 GB/s/dir = 50 GB/s/dir aggregate, 100 GB/s bidirectional</strong>. RTX 2080 Super and below have no NVLink. From RTX 30-series onward, only the 3090 / Quadro / A6000 retain bridges; from RTX 40-series, no consumer card has NVLink at all.</p>
+
+    <div class="callout">
+        <div class="callout-label">Host link</div>
+        <p>PCIe 3.0 x16 host link &mdash; 16 GB/s/dir &mdash; same as Pascal/Volta. Turing did not introduce PCIe 4.0; that came with Ampere.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-10">
+    <div class="slide-number">10</div>
+    <h2>Tesla T4 &mdash; The 75 W Inference Card That Won the Cloud</h2>
+    <p>The T4 deserves its own slide. A single-slot, full-height card on TU104, 75 W slot-only (no aux power), passively cooled, 16 GB GDDR6 ECC, 130 INT8 TOPS, 65 FP16 TFLOPS via tensor cores. <strong>Every major cloud provider (AWS, GCP, Azure, OCI) deployed T4s by the tens of thousands</strong> for inference workloads from 2019&ndash;2023.</p>
+
+    <div class="diagram-grid cols-3">
+        <div class="diagram-panel accent-border">
+            <h4>Why it won</h4>
+            <p>Best perf/W in the datacenter for INT8 inference. ~3&times; lower op-cost than V100 at similar throughput. Slot-only power = retrofit any 1U/2U server.</p>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>What replaced it</h4>
+            <p>Ada Lovelace L4 (24 GB, 72 W, FP8 absent but 4&times; tensor throughput, GDDR6) &mdash; same form factor, generational bump.</p>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>Legacy in 2026</h4>
+            <p>T4 still cheap-and-cheerful for embedding inference, OCR, ASR. Doesn't run modern LLMs well (no FP8, weak tensor cores by 2026 standards).</p>
+        </div>
+    </div>
+</section>
+
+<section class="slide" id="slide-11">
+    <div class="slide-number">11</div>
+    <h2>Turing's Innovations</h2>
+    <ul>
+        <li><strong>Hardware ray tracing.</strong> First consumer GPU with dedicated ray-triangle intersection units.</li>
+        <li><strong>2nd-gen tensor cores: INT8 / INT4.</strong> Set the precedent for quantised inference rates of 4&times;/8&times; FP16.</li>
+        <li><strong>GDDR6.</strong> Mainstream bandwidth doubled vs GDDR5; cleaner signalling than GDDR5X.</li>
+        <li><strong>Mesh shaders.</strong> Replaced the legacy vertex/geometry/tessellation pipeline with a more flexible compute-shader-like programming model. NVIDIA-first; later adopted by Vulkan and DX12 Ultimate.</li>
+        <li><strong>Variable Rate Shading (VRS).</strong> Per-region shading rate; first ratified consumer-GPU feature.</li>
+        <li><strong>DLSS 1.0 (and 2.0 in 2020).</strong> Tensor-core-driven super-resolution; now ubiquitous.</li>
+        <li><strong>Concurrent FP/INT.</strong> Inherited from Volta; first time on a graphics-tier die.</li>
+        <li><strong>USB-C (VirtualLink).</strong> Native USB-C with VESA DP-Alt + USB power on the card &mdash; for VR headsets. Discontinued after Turing; the standard never caught on.</li>
+        <li><strong>Tesla T4 form factor.</strong> 75 W single-slot inference card became a datacenter standard for half a decade.</li>
+    </ul>
+</section>
+
+<section class="slide" id="slide-12">
+    <div class="slide-number">12</div>
+    <h2>Interactive: Turing SKU Picker</h2>
+    <div class="control-panel">
+        <div class="control-row">
+            <label for="t-sku">Turing SKU</label>
+            <select id="t-sku">
+                <option value="2080ti">RTX 2080 Ti 11 GB</option>
+                <option value="titan">Titan RTX 24 GB</option>
+                <option value="rtx8000">Quadro RTX 8000 48 GB</option>
+                <option value="rtx6000">Quadro RTX 6000 24 GB</option>
+                <option value="2080s">RTX 2080 Super 8 GB</option>
+                <option value="2070">RTX 2070 8 GB</option>
+                <option value="2060">RTX 2060 6 GB</option>
+                <option value="t4">Tesla T4 16 GB</option>
+                <option value="1660ti">GTX 1660 Ti 6 GB (no RT/TC)</option>
+            </select>
+        </div>
+        <div class="metric-grid">
+            <div class="metric"><div class="metric-label">Die</div><div class="metric-value" id="t-die">&mdash;</div></div>
+            <div class="metric"><div class="metric-label">SMs</div><div class="metric-value" id="t-sms">&mdash;</div></div>
+            <div class="metric"><div class="metric-label">FP32 TF</div><div class="metric-value" id="t-fp32">&mdash;</div></div>
+            <div class="metric"><div class="metric-label">Tensor FP16 TF</div><div class="metric-value" id="t-tc">&mdash;</div></div>
+            <div class="metric"><div class="metric-label">INT8 TOPS</div><div class="metric-value" id="t-int8">&mdash;</div></div>
+            <div class="metric"><div class="metric-label">VRAM</div><div class="metric-value" id="t-vram">&mdash;</div></div>
+            <div class="metric"><div class="metric-label">BW</div><div class="metric-value" id="t-bw">&mdash;</div></div>
+            <div class="metric"><div class="metric-label">TDP</div><div class="metric-value" id="t-tdp">&mdash;</div></div>
+        </div>
+        <div id="t-out" class="result-box"></div>
+    </div>
+
+    <script>
+    (function(){
+        const data = {
+            '2080ti': { die:'TU102', sms:68, fp32:13.4, tc:108, int8:215, vram:'11 GB GDDR6', bw:616, tdp:'250 W', note:'Consumer flagship; NVLink bridge for 2-card.' },
+            'titan':  { die:'TU102', sms:72, fp32:16.3, tc:130, int8:261, vram:'24 GB GDDR6', bw:672, tdp:'280 W', note:'Full TU102; effective workstation card.' },
+            'rtx8000':{ die:'TU102', sms:72, fp32:16.3, tc:130, int8:261, vram:'48 GB GDDR6 ECC', bw:672, tdp:'295 W', note:'Quadro flagship; 48 GB ECC; NVLink bridge.' },
+            'rtx6000':{ die:'TU102', sms:72, fp32:16.3, tc:130, int8:261, vram:'24 GB GDDR6 ECC', bw:672, tdp:'260 W', note:'Quadro mid; ECC; NVLink bridge.' },
+            '2080s':  { die:'TU104', sms:48, fp32:11.2, tc:89,  int8:178, vram:'8 GB GDDR6 15.5G', bw:496, tdp:'250 W', note:'Refresh of 2080 with faster GDDR6.' },
+            '2070':   { die:'TU106', sms:36, fp32:7.5,  tc:60,  int8:119, vram:'8 GB GDDR6', bw:448, tdp:'175 W', note:'Mid-range RTX.' },
+            '2060':   { die:'TU106', sms:30, fp32:6.5,  tc:52,  int8:103, vram:'6 GB GDDR6', bw:336, tdp:'160 W', note:'Entry-level RTX; tight 6 GB.' },
+            't4':     { die:'TU104', sms:40, fp32:8.1,  tc:65,  int8:130, vram:'16 GB GDDR6 ECC', bw:320, tdp:'70 W',  note:'Datacenter inference; 75 W slot-only; the cloud GPU of 2019-2023.' },
+            '1660ti': { die:'TU116', sms:24, fp32:5.4,  tc:0,   int8:0,   vram:'6 GB GDDR6', bw:288, tdp:'120 W', note:'GTX-tier; no RT or TC; INT8 DP4A only.' }
+        };
+        function rec(){
+            const k = document.getElementById('t-sku').value;
+            const d = data[k];
+            document.getElementById('t-die').textContent = d.die;
+            document.getElementById('t-sms').textContent = d.sms;
+            document.getElementById('t-fp32').textContent = d.fp32 + ' TF';
+            document.getElementById('t-tc').textContent = d.tc ? (d.tc + ' TF') : 'no TC';
+            document.getElementById('t-int8').textContent = d.int8 ? (d.int8 + ' TOPS') : 'no TC';
+            document.getElementById('t-vram').textContent = d.vram;
+            document.getElementById('t-bw').textContent = d.bw;
+            document.getElementById('t-tdp').textContent = d.tdp;
+            document.getElementById('t-out').innerHTML = '<div><span class="line-label">role</span> &rarr; <span class="line-val">' + d.note + '</span></div>';
+        }
+        document.getElementById('t-sku').addEventListener('change', rec);
+        rec();
+    })();
+    </script>
+</section>
+<!-- ════════════════════════════════════ Footer ════════════════════════════════════ -->
+<footer class="footer">
+    <p>Part of the <a href="https://github.com/BrendanJamesLynskey/LLMs#nvidia-gpu-architectures">NVIDIA GPU Architectures Series</a></p>
+    <p style="margin-top: 0.5rem; font-size: 0.8rem;"><a href="https://github.com/BrendanJamesLynskey/LLMs#nvidia-gpu-architectures">Back to Series Index</a></p>
+</footer>
+
+<script>
+    // Smooth scroll for TOC links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+
+    // Subtle fade-in on scroll
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.slide').forEach(slide => {
+        slide.style.opacity = '0';
+        slide.style.transform = 'translateY(30px)';
+        slide.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(slide);
+    });
+</script>
+
+</body>
+</html>
