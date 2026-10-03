@@ -900,7 +900,7 @@
             <tbody>
                 <tr><td>FP32 FMA</td><td>64</td><td>13.4 TFLOPS</td><td>8.1 TFLOPS</td></tr>
                 <tr><td>FP16x2 (no TC)</td><td>128</td><td>26.9 TFLOPS</td><td>16.2 TFLOPS</td></tr>
-                <tr><td><strong>Tensor FP16</strong></td><td><strong>512</strong></td><td><strong>108 TFLOPS</strong></td><td><strong>65 TFLOPS</strong></td></tr>
+                <tr><td><strong>Tensor FP16</strong></td><td><strong>512</strong></td><td><strong>108 TFLOPS</strong> (FP16 accumulate; 53.8 with FP32 accumulate)</td><td><strong>65 TFLOPS</strong></td></tr>
                 <tr><td><strong>Tensor INT8</strong></td><td><strong>1024</strong></td><td><strong>215 TOPS</strong></td><td><strong>130 TOPS</strong></td></tr>
                 <tr><td><strong>Tensor INT4</strong></td><td><strong>2048</strong></td><td><strong>431 TOPS</strong></td><td><strong>260 TOPS</strong></td></tr>
             </tbody>
@@ -986,7 +986,7 @@
 <section class="slide" id="slide-09">
     <div class="slide-number">09</div>
     <h2>NVLink 2.0 (Bridge), PCIe 3.0</h2>
-    <p>Turing was the <strong>last consumer arch with NVLink</strong>. RTX 2080 Ti, Titan RTX, and Quadro RTX 6000/8000 carry an NVLink 2.0 bridge connector for two-card configurations: <strong>2 links &times; 25 GB/s/dir = 50 GB/s/dir aggregate, 100 GB/s bidirectional</strong>. RTX 2080 Super and below have no NVLink. From RTX 30-series onward, only the 3090 / Quadro / A6000 retain bridges; from RTX 40-series, no consumer card has NVLink at all.</p>
+    <p>Turing was the <strong>first consumer arch with NVLink</strong>. RTX 2080 Ti, Titan RTX, and Quadro RTX 6000/8000 carry an NVLink 2.0 bridge connector for two-card configurations: <strong>2 links &times; 25 GB/s/dir = 50 GB/s/dir aggregate, 100 GB/s bidirectional</strong>. RTX 2080 and 2080 Super carry a single link (25 GB/s/dir); the RTX 2070 and below have none. From RTX 30-series onward, only the 3090 / Quadro / A6000 retain bridges; from RTX 40-series, no consumer card has NVLink at all.</p>
 
     <div class="callout">
         <div class="callout-label">Host link</div>
@@ -1006,7 +1006,7 @@
         </div>
         <div class="diagram-panel accent-border">
             <h4>What replaced it</h4>
-            <p>Ada Lovelace L4 (24 GB, 72 W, FP8 absent but 4&times; tensor throughput, GDDR6) &mdash; same form factor, generational bump.</p>
+            <p>Ada Lovelace L4 (24 GB, 72 W, adds FP8, 4&times; tensor throughput, GDDR6) &mdash; same form factor, generational bump.</p>
         </div>
         <div class="diagram-panel accent-border">
             <h4>Legacy in 2026</h4>
@@ -1072,7 +1072,7 @@
             '2080s':  { die:'TU104', sms:48, fp32:11.2, tc:89,  int8:178, vram:'8 GB GDDR6 15.5G', bw:496, tdp:'250 W', note:'Refresh of 2080 with faster GDDR6.' },
             '2070':   { die:'TU106', sms:36, fp32:7.5,  tc:60,  int8:119, vram:'8 GB GDDR6', bw:448, tdp:'175 W', note:'Mid-range RTX.' },
             '2060':   { die:'TU106', sms:30, fp32:6.5,  tc:52,  int8:103, vram:'6 GB GDDR6', bw:336, tdp:'160 W', note:'Entry-level RTX; tight 6 GB.' },
-            't4':     { die:'TU104', sms:40, fp32:8.1,  tc:65,  int8:130, vram:'16 GB GDDR6 ECC', bw:320, tdp:'70 W',  note:'Datacenter inference; 75 W slot-only; the cloud GPU of 2019-2023.' },
+            't4':     { die:'TU104', sms:40, fp32:8.1,  tc:65,  int8:130, vram:'16 GB GDDR6 ECC', bw:320, tdp:'70 W',  note:'Datacenter inference; 70 W slot-only; the cloud GPU of 2019-2023.' },
             '1660ti': { die:'TU116', sms:24, fp32:5.4,  tc:0,   int8:0,   vram:'6 GB GDDR6', bw:288, tdp:'120 W', note:'GTX-tier; no RT or TC; INT8 DP4A only.' }
         };
         function rec(){
