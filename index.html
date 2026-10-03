@@ -892,7 +892,7 @@
 <section class="slide" id="slide-04">
     <div class="slide-number">04</div>
     <h2>2nd-Generation Tensor Cores &mdash; INT8 &amp; INT4</h2>
-    <p>Volta's 1st-gen tensor cores were FP16-only. Turing adds <strong>INT8 (4&times;) and INT4 (8&times;)</strong> at the same MMA shape, opening the door to quantised inference at multi-TOPS rates on small chips.</p>
+    <p>Volta's 1st-gen tensor cores were FP16-only. Turing adds <strong>INT8 (2&times; FP16) and INT4 (4&times; FP16)</strong> at the same MMA shape, opening the door to quantised inference at multi-TOPS rates on small chips.</p>
 
     <div class="table-wrap">
         <table>
@@ -1020,7 +1020,7 @@
     <h2>Turing's Innovations</h2>
     <ul>
         <li><strong>Hardware ray tracing.</strong> First consumer GPU with dedicated ray-triangle intersection units.</li>
-        <li><strong>2nd-gen tensor cores: INT8 / INT4.</strong> Set the precedent for quantised inference rates of 4&times;/8&times; FP16.</li>
+        <li><strong>2nd-gen tensor cores: INT8 / INT4.</strong> Set the precedent for quantised inference rates of 2&times;/4&times; FP16.</li>
         <li><strong>GDDR6.</strong> Mainstream bandwidth doubled vs GDDR5; cleaner signalling than GDDR5X.</li>
         <li><strong>Mesh shaders.</strong> Replaced the legacy vertex/geometry/tessellation pipeline with a more flexible compute-shader-like programming model. NVIDIA-first; later adopted by Vulkan and DX12 Ultimate.</li>
         <li><strong>Variable Rate Shading (VRS).</strong> Per-region shading rate; first ratified consumer-GPU feature.</li>
